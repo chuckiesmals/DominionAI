@@ -18,11 +18,14 @@ namespace DominionAI
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        Simulator _sim;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
+            _sim = new Simulator(2);
         }
 
         /// <summary>
@@ -59,6 +62,8 @@ namespace DominionAI
             // TODO: Unload any non ContentManager content here
         }
 
+        bool _wasEnterDown = false;
+
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -70,8 +75,12 @@ namespace DominionAI
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            // TODO: Add your update logic here
+            if (_wasEnterDown && Keyboard.GetState().IsKeyUp(Keys.Enter))
+            {
+                _sim.Update();
+            }
 
+            _wasEnterDown = Keyboard.GetState().IsKeyDown(Keys.Enter);
             base.Update(gameTime);
         }
 
