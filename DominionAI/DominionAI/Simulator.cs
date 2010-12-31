@@ -6,12 +6,12 @@ using Microsoft.Xna.Framework.Input;
 
 namespace DominionAI
 {
-    class Simulator
+    public class Simulator
     {
-        List<Player> _players;
+        public List<Player> _players;
         public List<Card.Card> _masterSet;
         List<Card.Card> _kingdomCards;
-        int _numberOfPlayers = 2;
+        public int _numberOfPlayers = 2;
         int _currentPlayer;
 
         #region Input
@@ -64,6 +64,7 @@ namespace DominionAI
             _masterSet.Add(new Card.Estate());
             _masterSet.Add(new Card.Duchy());
             _masterSet.Add(new Card.Province());
+            _masterSet.Add(new Card.Militia());
         }
 
         public void Reset()
@@ -138,5 +139,6 @@ namespace DominionAI
                 _currentPlayer = 0;
             }
         }
+        
     }
 }
