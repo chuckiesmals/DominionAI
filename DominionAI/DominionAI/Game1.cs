@@ -75,6 +75,7 @@ namespace DominionAI
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
+            _sim.UpdateInput();
             if (_wasEnterDown && Keyboard.GetState().IsKeyUp(Keys.Enter))
             {
                 _sim.Update();
