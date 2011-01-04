@@ -65,6 +65,10 @@ namespace DominionAI
             _masterSet.Add(new Card.Duchy());
             _masterSet.Add(new Card.Province());
             _masterSet.Add(new Card.Militia());
+
+            Console.WriteLine("\n\n============================");
+            Console.WriteLine("|    Dominion Simulator    |");
+            Console.WriteLine("============================\n\n");
         }
 
         public void Reset()
@@ -127,7 +131,7 @@ namespace DominionAI
 
         public void Update()
         {
-            Console.WriteLine("Player " + _currentPlayer.ToString() + " update.");
+            Console.Write("Player " + _currentPlayer.ToString());
             _players[_currentPlayer].Update(this);
         }
 

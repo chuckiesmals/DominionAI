@@ -127,6 +127,8 @@ namespace DominionAI
 
             override public void PerformAction(Player owner, Simulator sim)
             {
+                Console.Write(" begins " + _name + " action.\n");
+
                 // +2 Money
                 owner._treasureModifier += 2;
 
@@ -149,12 +151,12 @@ namespace DominionAI
                 {
                     if (playerDiscarding._hand.Count > 3)
                     {
-                        Console.WriteLine("Player " + _currentPlayerToDiscard + " needs to discard 2 cards");
-                        playerDiscarding.PrintHand(2);
+                        Console.WriteLine("      Player " + _currentPlayerToDiscard + " needs to discard 2 cards");
+                        playerDiscarding.PrintHand(8);
 
                         if (sim._lastNumberPressed > -1)
                         {
-                            Console.WriteLine("  Last key pressed " + sim._lastNumberPressed);
+                            Console.WriteLine("  Selected: " + sim._lastNumberPressed);
                             
                             // Discard card from hand
                             Card card = playerDiscarding._hand[sim._lastNumberPressed];
@@ -166,29 +168,31 @@ namespace DominionAI
                     }
                     else
                     {
+                        // That player has discarded, move to next player
                         _currentPlayerToDiscard++;
 
                         if (sim._players.Count > _currentPlayerToDiscard)
                         {
+                            // skip ahead by 2, if this is the owner
                             if (sim._players[_currentPlayerToDiscard] == owner)
+                            {
+                                _currentPlayerToDiscard += 2;
+                            }
+                            // skip ahead once
+                            else
                             {
                                 _currentPlayerToDiscard++;
                             }
-                            else
-                            {
-                                if (_currentPlayerToDiscard + 1 > sim._numberOfPlayers)
-                                {
-                                    _currentPlayerToDiscard = -1;
-                                    done = true;
-                                }
-                                else
-                                {
-                                    _currentPlayerToDiscard++;
-                                }
-                            }
-
                         }
                         else
+                        {
+                            _currentPlayerToDiscard = -1;
+                            _currentPhase = MilitiaPhase.Idle;
+                            done = true;
+                        }
+
+                        // check bounds
+                        if (_currentPlayerToDiscard >= sim._numberOfPlayers)
                         {
                             _currentPlayerToDiscard = -1;
                             done = true;

@@ -145,6 +145,8 @@ namespace DominionAI
             _deck.Add(new Card.Militia());
 
             ShuffleCards(_deck);
+
+            DrawHand();
         }
 
         void CheckToReshuffle()
@@ -164,6 +166,7 @@ namespace DominionAI
 
         void ShuffleCards(List<Card.Card> cards)
         {
+            Console.WriteLine("  Shuffling cards");
             //Console.WriteLine("Cards Before:");
 
             //foreach (Card.Card card in cards)
@@ -201,24 +204,44 @@ namespace DominionAI
                 _deck.RemoveAt(0);
             }
 
-            Console.WriteLine("    Draw Hand:");
-            foreach(Card.Card card in _hand)
+            //Console.WriteLine("\n  Draw Hand:");
+            //foreach(Card.Card card in _hand)
+            //{
+            //    Console.WriteLine("      " + card._name);
+            //}
+        }
+
+        void PrintNakedHand(int indent)
+        {
+            string spacing = "";
+            for (int i = 0; i < indent; ++i)
             {
-                Console.WriteLine("      " + card._name);
+                spacing += " ";
             }
+
+            for (int i = 0; i < _hand.Count; ++i)
+            {
+                Console.Write(spacing + _hand[i]._name + " ");
+            }
+
+            Console.Write("\n");
         }
 
         public void Update(Simulator sim)
         {
-            Console.WriteLine("  " + _currentPhase.ToString());
+            //Console.WriteLine("  " + _currentPhase.ToString());
 
             if (_currentPhase == Phase.Idle)
             {
+                Console.Write(" turn starts.\n");
                 // If hand is empty, pick first five cards
                 if (_hand.Count == 0)
                 {
                     DrawHand();
                 }
+
+                PrintNakedHand(2);
+
                 _currentPhase = Phase.Action;
             }
             // Action Phase
@@ -234,11 +257,16 @@ namespace DominionAI
             // Put hand into Discard pile and Fill hand
             else if (_currentPhase == Phase.Cleanup)
             {
+                Console.Write(" cleans up.\n");
+
                 foreach (Card.Card card in _hand)
                 {
                     _discard.Add(card);
                 }
+
                 _hand.Clear();
+                _handTreasure = 0;
+                _treasureModifier = 0;
                 DrawHand();
                 _currentPhase = Phase.Idle;
                 sim.NextPlayerTurn();
@@ -252,7 +280,7 @@ namespace DominionAI
 
             if (sim._masterSet[index]._supplyCount > 0 && _handTreasure + _treasureModifier >= cardToBuy._cost)
             {
-                Console.WriteLine("    Buying " + cardToBuy._name);
+                Console.WriteLine(" bought " + cardToBuy._name + ".");
                 _discard.Add(cardToBuy);
                 cardToBuy._supplyCount--;
 
@@ -261,7 +289,7 @@ namespace DominionAI
             }
             else
             {
-                Console.WriteLine("    Can't buy: " + sim._masterSet[index]._name);
+                Console.WriteLine(" can't buy " + sim._masterSet[index]._name + ".\n");
             }
 
             return bought;
@@ -269,9 +297,11 @@ namespace DominionAI
 
         void UpdateBuyState(Simulator sim)
         {
-            Console.WriteLine("    " + _buyState.ToString());
+            //Console.WriteLine("    " + _buyState.ToString());
+
             if (_buyState == BuyState.Idle)
             {
+                Console.WriteLine(" buy a card:");
                 // Print cards available to buy
                 _handTreasure = CountMoneyFromTreasure();
                 Console.WriteLine("      Treasure: " + _handTreasure);
@@ -284,7 +314,7 @@ namespace DominionAI
                 // Wait for input
                 if (sim._lastNumberPressed > -1)
                 {
-                    Console.WriteLine("      Pressed: " + sim._lastNumberPressed);
+                    //Console.WriteLine("      Pressed: " + sim._lastNumberPressed);
 
                     if (BuyCard(sim._lastNumberPressed, sim))
                     {
@@ -293,6 +323,10 @@ namespace DominionAI
                     }
 
                     sim._lastNumberPressed = -1;
+                }
+                else
+                {
+                    Console.Write(" buy a card.\n");
                 }
             }
 
@@ -325,34 +359,59 @@ namespace DominionAI
             return treasure;
         }
 
+        bool AreThereActions()
+        {
+            for (int i = 0; i < _hand.Count; ++i)
+            {
+                if (_hand[i]._type == Card.Type.Action)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void UpdateActionState(Simulator sim)
         {
-            Console.WriteLine("    " + _actionState.ToString());
+            //Console.WriteLine("    " + _actionState.ToString());
 
             if (_actionState == ActionState.Idle)
             {
-                // 1. List Actions in hand                
-                _actionState = ActionState.Choose;
-                PrintActions(6);
+                if (AreThereActions())
+                {
+                    // 1. List Actions in hand
+                    _actionState = ActionState.Choose;
+                    PrintActions(6);
+                }
+                else
+                {
+                    // go to buy phase if no actions
+                    Console.Write(" no actions, go to buy phase.\n");
+                    _currentPhase = Phase.Buy;
+                }
             }
             else if (_actionState == ActionState.Choose)
             {
-                // 2. Choose Action
-                _actionState = ActionState.Perform;
-
                 // Wait for input
                 if (sim._lastNumberPressed > -1)
                 {
-                    Console.WriteLine("      Pressed: " + sim._lastNumberPressed);
+                    // 2. Choose Action
+                    _actionState = ActionState.Perform;
+
+                    //Console.WriteLine("      Pressed: " + sim._lastNumberPressed);
                     ChooseAction(sim._lastNumberPressed, sim);
                 }
-                
+                else
+                {
+                    Console.Write(" needs to play an action or skip.\n");
+                }
             }
             else if (_actionState == ActionState.Perform)
             {
                 if (_currentAction != null)
                 {
-                    Console.WriteLine("    [" + _currentAction._name + "]");
+                    Console.WriteLine(" is playing " + _currentAction._name + ".");
 
                     bool done = _currentAction.Update(this, sim);
 
@@ -360,6 +419,7 @@ namespace DominionAI
 
                     if (done)
                     {
+                        _currentAction = null;
                         _actionState = ActionState.Idle;
                         _currentPhase = Phase.Buy;
                     }
@@ -390,10 +450,11 @@ namespace DominionAI
 
         public void PrintActions(int indent)
         {
-            String spaces = "";
+            Console.Write(" needs to choose an action: \n");
+            string spaces = "";
             for (int i = 0; i < indent; ++i)
             {
-                spaces.Insert(0, " ");
+                spaces += " ";
             }
 
             for (int i = 0; i < _hand.Count; ++i)
@@ -407,10 +468,10 @@ namespace DominionAI
 
         public void PrintHand(int indent)
         {
-            String spaces = "";
-            for (int i = 0; i < indent; ++i)
+            string spaces = "";
+            for (int i = 0; i < indent; i++)
             {
-                spaces.Insert(0, " ");
+                spaces += " ";
             }
 
             for (int i = 0; i < _hand.Count; ++i)
